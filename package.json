@@ -1,0 +1,16 @@
+{
+  "name": "nexisworld-bot",
+  "version": "1.0.0",
+  "description": "Simple Discord bot for NexisWorld to send messages as the bot (open to all users).",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=16.9.0"
+  },
+  "dependencies": {
+    "discord.js": "^14.11.0",
+    "dotenv": "^16.3.1"
+  }
+}
