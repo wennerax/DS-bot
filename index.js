@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { Client, GatewayIntentBits } = require('discord.js');
+const { Client, GatewayIntentBits, PermissionsBitField } = require('discord.js');
 
 const client = new Client({
   intents: [
@@ -9,7 +9,7 @@ const client = new Client({
   ]
 });
 
-const PREFIX = '!';
+const PREFIX = '/';
 
 client.once('clientReady', () => {
   console.log(`Вошёл как ${client.user.tag}`);
@@ -26,6 +26,10 @@ client.on('messageCreate', async (message) => {
   if (command === 'say' || command === 's') {
     const text = args.join(' ');
     if (!text) return message.reply('Пожалуйста, укажите сообщение для отправки.');
+    // Allow only server administrators
+    if (!message.member || !message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+      return message.reply('У вас нет прав для использования этой команды. Только администраторы.').then(m => setTimeout(() => m.delete().catch(() => {}), 5000)).catch(() => {});
+    }
     try {
       // Try to delete the user's invoking message immediately (requires Manage Messages permission)
       message.delete().catch(() => {});
@@ -44,6 +48,11 @@ client.on('interactionCreate', async (interaction) => {
   if (interaction.commandName === 'say') {
     const text = interaction.options.getString('message');
     if (!text) return interaction.reply({ content: 'Укажите сообщение.', ephemeral: true });
+
+    // Allow only server administrators
+    if (!interaction.memberPermissions || !interaction.memberPermissions.has(PermissionsBitField.Flags.Administrator)) {
+      return interaction.reply({ content: 'У вас нет прав для использования этой команды. Только администраторы.', ephemeral: true });
+    }
 
     try {
       // Send the message as the bot immediately
