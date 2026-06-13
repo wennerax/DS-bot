@@ -4,7 +4,8 @@
   "description": "Simple Discord bot for NexisWorld to send messages as the bot (open to all users).",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "deploy-commands": "node deploy-commands.js"
   },
   "engines": {
     "node": ">=16.9.0"

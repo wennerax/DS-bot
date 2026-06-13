@@ -12,9 +12,10 @@ const client = new Client({
 const PREFIX = '!';
 
 client.once('ready', () => {
-  console.log(`Logged in as ${client.user.tag}`);
+  console.log(`Вошёл как ${client.user.tag}`);
 });
 
+// Keep the old text-based command (prefix `!`) as a fallback
 client.on('messageCreate', async (message) => {
   if (message.author.bot) return;
   if (!message.content.startsWith(PREFIX)) return;
@@ -24,20 +25,45 @@ client.on('messageCreate', async (message) => {
 
   if (command === 'say' || command === 's') {
     const text = args.join(' ');
-    if (!text) return message.reply('Please provide a message to send.');
-
+    if (!text) return message.reply('Пожалуйста, укажите сообщение для отправки.');
     try {
+      // Try to delete the user's invoking message immediately (requires Manage Messages permission)
+      message.delete().catch(() => {});
       await message.channel.send(text);
     } catch (err) {
-      console.error('Failed to send message:', err);
-      message.reply('Failed to send message.');
+      console.error('Не удалось отправить сообщение:', err);
+      message.reply('Не удалось отправить сообщение.');
+    }
+  }
+});
+
+// Slash command handling
+client.on('interactionCreate', async (interaction) => {
+  if (!interaction.isChatInputCommand()) return;
+
+  if (interaction.commandName === 'say') {
+    const text = interaction.options.getString('message');
+    if (!text) return interaction.reply({ content: 'Укажите сообщение.', ephemeral: true });
+
+    try {
+      // Send the message as the bot immediately
+      await interaction.channel.send(text);
+      // Reply to the interaction only with an ephemeral confirmation (so nothing public remains)
+      await interaction.reply({ content: 'Сообщение отправлено.', ephemeral: true });
+    } catch (err) {
+      console.error('Ошибка при отправке через слэш-команду:', err);
+      if (interaction.replied || interaction.deferred) {
+        await interaction.editReply({ content: 'Не удалось отправить сообщение.' });
+      } else {
+        await interaction.reply({ content: 'Не удалось отправить сообщение.', ephemeral: true });
+      }
     }
   }
 });
 
 const token = process.env.DISCORD_TOKEN;
 if (!token) {
-  console.error('Missing DISCORD_TOKEN in environment. See .env.example');
+  console.error('Отсутствует DISCORD_TOKEN в окружении. Посмотрите в .env.example');
   process.exit(1);
 }
 
