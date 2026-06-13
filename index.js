@@ -11,7 +11,7 @@ const client = new Client({
 
 const PREFIX = '!';
 
-client.once('ready', () => {
+client.once('clientReady', () => {
   console.log(`Вошёл как ${client.user.tag}`);
 });
 

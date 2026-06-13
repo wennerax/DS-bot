@@ -5,18 +5,18 @@ const token = process.env.DISCORD_TOKEN;
 const guildId = process.env.GUILD_ID;
 
 if (!token || !guildId) {
-  console.error('Please set DISCORD_TOKEN and GUILD_ID in your environment.');
+  console.error('Пожалуйста, укажите DISCORD_TOKEN и GUILD_ID в окружении.');
   process.exit(1);
 }
 
 const commands = [
   {
     name: 'say',
-    description: 'Send a message as the bot',
+    description: 'Отправить сообщение от имени бота',
     options: [
       {
         name: 'message',
-        description: 'Text to send',
+        description: 'Текст для отправки',
         type: ApplicationCommandOptionType.String,
         required: true,
       },
@@ -26,13 +26,13 @@ const commands = [
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
-client.once('ready', async () => {
+client.once('clientReady', async () => {
   try {
     const guild = await client.guilds.fetch(guildId);
     await guild.commands.set(commands);
-    console.log('Registered slash commands for guild', guildId);
+    console.log('Зарегистрированы slash-команды для гильдии', guildId);
   } catch (err) {
-    console.error('Failed to register commands:', err);
+    console.error('Не удалось зарегистрировать команды:', err);
   } finally {
     client.destroy();
   }
