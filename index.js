@@ -1,6 +1,36 @@
 require('dotenv').config();
 const { Client, GatewayIntentBits, PermissionsBitField } = require('discord.js');
 
+// Security: read token early and avoid accidental leakage in logs
+const TOKEN = process.env.DISCORD_TOKEN;
+
+function redactToken(value) {
+  if (!value || !TOKEN) return value;
+  try {
+    return String(value).split(TOKEN).join('[REDACTED_DISCORD_TOKEN]');
+  } catch {
+    return value;
+  }
+}
+
+const _origLog = console.log.bind(console);
+const _origError = console.error.bind(console);
+console.log = (...args) => _origLog(...args.map(redactToken));
+console.error = (...args) => _origError(...args.map(redactToken));
+
+process.on('unhandledRejection', (reason, p) => {
+  console.error('Unhandled Rejection at:', p, 'reason:', reason);
+  // attempt graceful shutdown
+  try { if (global.botClient) global.botClient.destroy?.(); } catch {}
+  setTimeout(() => process.exit(1), 1000);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+  try { if (global.botClient) global.botClient.destroy?.(); } catch {}
+  setTimeout(() => process.exit(1), 1000);
+});
+
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -8,6 +38,9 @@ const client = new Client({
     GatewayIntentBits.MessageContent
   ]
 });
+
+// make client available to global handlers for graceful shutdown
+global.botClient = client;
 
 const PREFIX = '/';
 
@@ -70,10 +103,14 @@ client.on('interactionCreate', async (interaction) => {
   }
 });
 
-const token = process.env.DISCORD_TOKEN;
+const token = TOKEN;
 if (!token) {
   console.error('Отсутствует DISCORD_TOKEN в окружении. Посмотрите в .env.example');
   process.exit(1);
 }
 
-client.login(token);
+// Do not log the token or attach it anywhere; use the TOKEN variable only for login
+client.login(token).catch(err => {
+  console.error('Failed to login:', err);
+  process.exit(1);
+});
